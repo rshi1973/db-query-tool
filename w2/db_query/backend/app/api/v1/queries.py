@@ -1,7 +1,7 @@
 """Query execution API endpoints."""
 
 import json
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel import Session, select
 from typing import List
 from app.database import get_session
@@ -19,6 +19,7 @@ from app.services.query import get_query_history
 from app.services.sql_validator import SqlValidationError
 from app.services.nl2sql import nl2sql_service
 from app.services.metadata import get_cached_metadata
+from app.services.rate_limiter import check_rate_limit
 
 router = APIRouter(prefix="/api/v1/dbs", tags=["queries"])
 
@@ -128,19 +129,25 @@ async def get_query_history_for_database(
 async def natural_language_to_sql(
     name: str,
     input_data: NaturalLanguageInput,
+    request: Request,
     session: Session = Depends(get_session),
 ) -> GeneratedSqlResponse:
     """
-    Convert natural language to SQL query using OpenAI.
+    Convert natural language to SQL query using Google Gemini.
 
     Args:
         name: Database connection name
         input_data: Natural language prompt
+        request: FastAPI request object (for rate limiting)
         session: Database session
 
     Returns:
         Generated SQL query with explanation
     """
+    # Rate limiting: Use client IP as identifier
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(client_ip)
+
     # Get connection
     statement = select(DatabaseConnection).where(DatabaseConnection.name == name)
     connection = session.exec(statement).first()

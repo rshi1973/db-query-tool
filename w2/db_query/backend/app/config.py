@@ -7,8 +7,8 @@ from pathlib import Path
 class Settings(BaseSettings):
     """Application settings."""
 
-    # OpenAI API
-    openai_api_key: str
+    # Google Gemini API
+    gemini_api_key: str
 
     # Data directory
     db_query_data_dir: str = str(Path.home() / ".db_query")
@@ -30,6 +30,10 @@ class Settings(BaseSettings):
 
     # Metadata cache configuration
     metadata_cache_hours: int = 24
+
+    # Rate limiting configuration
+    llm_rate_limit_max_requests: int = 10
+    llm_rate_limit_window_seconds: int = 60
 
     model_config = SettingsConfigDict(
         env_file=".env",

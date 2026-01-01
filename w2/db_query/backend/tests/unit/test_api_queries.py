@@ -383,7 +383,7 @@ class TestNaturalLanguageToSql:
     def test_natural_language_to_sql_generation_error(self, mock_generate, client, sample_connection, sample_metadata):
         """Test NL to SQL when generation fails."""
         # Mock generation error
-        mock_generate.side_effect = Exception("OpenAI API error")
+        mock_generate.side_effect = Exception("Gemini API error")
 
         response = client.post(
             "/api/v1/dbs/test_db/query/natural",

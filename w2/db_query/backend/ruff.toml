@@ -1,0 +1,14 @@
+# Ruff configuration for backend linting
+# This file provides a standalone ruff.toml as requested in T086.
+# Configuration is also available in pyproject.toml.
+
+line-length = 100
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = []
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py
+

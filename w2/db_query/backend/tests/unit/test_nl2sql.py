@@ -1,8 +1,9 @@
 """Unit tests for natural language to SQL conversion service."""
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from app.services.nl2sql import NaturalLanguageToSQLService
+import asyncio
 
 
 @pytest.fixture
@@ -97,29 +98,22 @@ class TestGenerateSql:
     @pytest.mark.asyncio
     async def test_generate_sql_basic_query(self, nl2sql_service, sample_metadata):
         """Test generating SQL from basic natural language query."""
-        # Mock OpenAI response
+        # Mock Gemini response
         mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(
-                message=MagicMock(
-                    content="SELECT * FROM public.users LIMIT 100"
-                )
-            )
-        ]
+        mock_response.text = "SELECT * FROM public.users LIMIT 100"
 
         with patch.object(
-            nl2sql_service.client.chat.completions,
-            "create",
-            new=AsyncMock(return_value=mock_response),
-        ) as mock_create:
+            nl2sql_service.model,
+            "generate_content",
+            return_value=mock_response,
+        ) as mock_generate:
             result = await nl2sql_service.generate_sql(
                 user_prompt="Show me all users",
                 metadata=sample_metadata,
             )
 
-            # Verify OpenAI was called
-            mock_create.assert_called_once()
-            call_args = mock_create.call_args
+            # Verify Gemini was called
+            mock_generate.assert_called_once()
 
             # Verify result structure
             assert "sql" in result
@@ -127,26 +121,17 @@ class TestGenerateSql:
             assert result["sql"] == "SELECT * FROM public.users LIMIT 100"
             assert "Show me all users" in result["explanation"]
 
-            # Verify OpenAI call parameters
-            assert call_args.kwargs["model"] == "gpt-4o-mini"
-
     @pytest.mark.asyncio
     async def test_generate_sql_removes_markdown(self, nl2sql_service, sample_metadata):
         """Test that generated SQL removes markdown code blocks."""
-        # Mock OpenAI response with markdown
+        # Mock Gemini response with markdown
         mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(
-                message=MagicMock(
-                    content="```sql\nSELECT * FROM public.users LIMIT 100\n```"
-                )
-            )
-        ]
+        mock_response.text = "```sql\nSELECT * FROM public.users LIMIT 100\n```"
 
         with patch.object(
-            nl2sql_service.client.chat.completions,
-            "create",
-            new=AsyncMock(return_value=mock_response),
+            nl2sql_service.model,
+            "generate_content",
+            return_value=mock_response,
         ):
             result = await nl2sql_service.generate_sql(
                 user_prompt="Show me all users",
@@ -160,20 +145,14 @@ class TestGenerateSql:
     @pytest.mark.asyncio
     async def test_generate_sql_removes_generic_markdown(self, nl2sql_service, sample_metadata):
         """Test removing generic markdown code blocks."""
-        # Mock OpenAI response with generic markdown
+        # Mock Gemini response with generic markdown
         mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(
-                message=MagicMock(
-                    content="```\nSELECT id, name FROM public.users WHERE id > 10 LIMIT 50\n```"
-                )
-            )
-        ]
+        mock_response.text = "```\nSELECT id, name FROM public.users WHERE id > 10 LIMIT 50\n```"
 
         with patch.object(
-            nl2sql_service.client.chat.completions,
-            "create",
-            new=AsyncMock(return_value=mock_response),
+            nl2sql_service.model,
+            "generate_content",
+            return_value=mock_response,
         ):
             result = await nl2sql_service.generate_sql(
                 user_prompt="Get users with id greater than 10",
@@ -186,20 +165,14 @@ class TestGenerateSql:
     @pytest.mark.asyncio
     async def test_generate_sql_with_chinese_prompt(self, nl2sql_service, sample_metadata):
         """Test generating SQL from Chinese natural language."""
-        # Mock OpenAI response
+        # Mock Gemini response
         mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(
-                message=MagicMock(
-                    content="SELECT * FROM public.users LIMIT 100"
-                )
-            )
-        ]
+        mock_response.text = "SELECT * FROM public.users LIMIT 100"
 
         with patch.object(
-            nl2sql_service.client.chat.completions,
-            "create",
-            new=AsyncMock(return_value=mock_response),
+            nl2sql_service.model,
+            "generate_content",
+            return_value=mock_response,
         ):
             result = await nl2sql_service.generate_sql(
                 user_prompt="显示所有用户",
@@ -212,20 +185,14 @@ class TestGenerateSql:
     @pytest.mark.asyncio
     async def test_generate_sql_with_join(self, nl2sql_service, sample_metadata):
         """Test generating SQL with JOIN."""
-        # Mock OpenAI response with JOIN
+        # Mock Gemini response with JOIN
         mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(
-                message=MagicMock(
-                    content="SELECT u.name, o.total FROM public.users u JOIN public.orders o ON u.id = o.user_id LIMIT 100"
-                )
-            )
-        ]
+        mock_response.text = "SELECT u.name, o.total FROM public.users u JOIN public.orders o ON u.id = o.user_id LIMIT 100"
 
         with patch.object(
-            nl2sql_service.client.chat.completions,
-            "create",
-            new=AsyncMock(return_value=mock_response),
+            nl2sql_service.model,
+            "generate_content",
+            return_value=mock_response,
         ):
             result = await nl2sql_service.generate_sql(
                 user_prompt="Show me users with their orders",
@@ -239,11 +206,11 @@ class TestGenerateSql:
     @pytest.mark.asyncio
     async def test_generate_sql_handles_api_error(self, nl2sql_service, sample_metadata):
         """Test that API errors are properly raised."""
-        # Mock OpenAI to raise error
+        # Mock Gemini to raise error
         with patch.object(
-            nl2sql_service.client.chat.completions,
-            "create",
-            new=AsyncMock(side_effect=Exception("OpenAI API error")),
+            nl2sql_service.model,
+            "generate_content",
+            side_effect=Exception("Gemini API error"),
         ):
             with pytest.raises(Exception) as exc_info:
                 await nl2sql_service.generate_sql(
@@ -252,64 +219,59 @@ class TestGenerateSql:
                 )
 
             assert "Failed to generate SQL" in str(exc_info.value)
-            assert "OpenAI API error" in str(exc_info.value)
+            assert "Gemini API error" in str(exc_info.value)
 
 
 class TestBuildPrompt:
-    """Test prompt building for OpenAI."""
+    """Test prompt building for Gemini."""
 
     def test_build_prompt_includes_schema(self, nl2sql_service, sample_metadata):
         """Test that prompt includes database schema information."""
-        messages = nl2sql_service._build_prompt(
+        prompt = nl2sql_service._build_prompt(
             user_prompt="Show me all users",
             metadata=sample_metadata,
         )
 
-        assert len(messages) == 2
-        assert messages[0]["role"] == "system"
-        assert messages[1]["role"] == "user"
-        assert messages[1]["content"] == "Show me all users"
+        assert isinstance(prompt, str)
+        assert "Show me all users" in prompt
 
-        # Check system message contains schema
-        system_message = messages[0]["content"]
-        assert "users" in system_message
-        assert "orders" in system_message
-        assert "public" in system_message
-        assert "100 rows" in system_message
-        assert "500 rows" in system_message
+        # Check prompt contains schema
+        assert "users" in prompt
+        assert "orders" in prompt
+        assert "public" in prompt
+        assert "100 rows" in prompt
+        assert "500 rows" in prompt
 
         # Check column information
-        assert "id" in system_message
-        assert "name" in system_message
-        assert "email" in system_message
-        assert "PRIMARY KEY" in system_message
-        assert "UNIQUE" in system_message
+        assert "id" in prompt
+        assert "name" in prompt
+        assert "email" in prompt
+        assert "PRIMARY KEY" in prompt
+        assert "UNIQUE" in prompt
 
     def test_build_prompt_includes_views(self, nl2sql_service, sample_metadata):
         """Test that prompt includes view information."""
-        messages = nl2sql_service._build_prompt(
+        prompt = nl2sql_service._build_prompt(
             user_prompt="Query views",
             metadata=sample_metadata,
         )
 
-        system_message = messages[0]["content"]
-        assert "View:" in system_message
-        assert "user_summary" in system_message
-        assert "total_users" in system_message
+        assert "View:" in prompt
+        assert "user_summary" in prompt
+        assert "total_users" in prompt
 
     def test_build_prompt_includes_rules(self, nl2sql_service, sample_metadata):
         """Test that prompt includes generation rules."""
-        messages = nl2sql_service._build_prompt(
+        prompt = nl2sql_service._build_prompt(
             user_prompt="Test query",
             metadata=sample_metadata,
         )
 
-        system_message = messages[0]["content"]
-        assert "Rules:" in system_message
-        assert "SELECT" in system_message
-        assert "LIMIT" in system_message
-        assert "PostgreSQL" in system_message
-        assert "English and Chinese" in system_message
+        assert "Rules:" in prompt
+        assert "SELECT" in prompt
+        assert "LIMIT" in prompt
+        assert "PostgreSQL" in prompt
+        assert "English and Chinese" in prompt
 
     def test_build_prompt_with_nullable_columns(self, nl2sql_service):
         """Test prompt building with nullable and not null columns."""
@@ -340,27 +302,25 @@ class TestBuildPrompt:
             "views": [],
         }
 
-        messages = nl2sql_service._build_prompt(
+        prompt = nl2sql_service._build_prompt(
             user_prompt="Test",
             metadata=metadata,
         )
 
-        system_message = messages[0]["content"]
-        assert "NOT NULL" in system_message
+        assert "NOT NULL" in prompt
         # nullable=True should not add NOT NULL
 
     def test_build_prompt_empty_metadata(self, nl2sql_service):
         """Test prompt building with empty metadata."""
         metadata = {"tables": [], "views": []}
 
-        messages = nl2sql_service._build_prompt(
+        prompt = nl2sql_service._build_prompt(
             user_prompt="Test query",
             metadata=metadata,
         )
 
-        assert len(messages) == 2
-        system_message = messages[0]["content"]
-        assert "Database Schema:" in system_message
+        assert isinstance(prompt, str)
+        assert "Database Schema:" in prompt
 
     def test_build_prompt_with_default_values(self, nl2sql_service):
         """Test prompt building includes default values."""
@@ -385,12 +345,11 @@ class TestBuildPrompt:
             "views": [],
         }
 
-        messages = nl2sql_service._build_prompt(
+        prompt = nl2sql_service._build_prompt(
             user_prompt="Test",
             metadata=metadata,
         )
 
-        system_message = messages[0]["content"]
-        assert "settings" in system_message
-        assert "enabled" in system_message
-        assert "boolean" in system_message
+        assert "settings" in prompt
+        assert "enabled" in prompt
+        assert "boolean" in prompt
