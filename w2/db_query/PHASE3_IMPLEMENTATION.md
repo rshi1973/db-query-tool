@@ -39,7 +39,7 @@ Successfully implemented all Phase 3 frontend UI features for the DB Query Tool:
 
 **Error Handling:**
 - Network errors caught and displayed
-- Backend errors (validation, OpenAI failures) shown in Alert
+- Backend errors (validation, Gemini API failures) shown in Alert
 - User-friendly error messages
 - Non-blocking - user can retry or switch tabs
 
@@ -269,8 +269,8 @@ No new dependencies added. All features use existing packages:
    - Always uses UTF-8 encoding
 
 3. **Natural Language:**
-   - Quality depends on OpenAI API
-   - Requires OPENAI_API_KEY in backend .env
+   - Quality depends on Google Gemini API
+   - Requires GEMINI_API_KEY in backend .env
    - Rate limits apply (backend enforces)
    - Only supports SELECT queries (backend restriction)
 

@@ -36,8 +36,8 @@ export const DatabaseCreate: React.FC = () => {
           rules={[
             { required: true, message: "Please enter connection URL" },
             {
-              pattern: /^postgresql:\/\//,
-              message: "URL must start with postgresql://",
+              pattern: /^(postgresql|postgres|mysql):\/\//,
+              message: "URL must start with postgresql://, postgres://, or mysql://",
             },
           ]}
         >

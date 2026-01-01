@@ -12,7 +12,7 @@ uv sync
 2. Create `.env` file from `.env.example`:
 ```bash
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+# Edit .env and add your GEMINI_API_KEY
 ```
 
 3. Run database migrations:

@@ -1,6 +1,6 @@
 # Database Query Tool
 
-A web-based tool for managing PostgreSQL database connections, viewing metadata, and executing SQL queries with natural language support.
+A web-based tool for managing database connections (PostgreSQL and MySQL), viewing metadata, executing SQL queries, and converting natural language to SQL using AI.
 
 ## Project Structure
 
@@ -24,7 +24,7 @@ make install
 
 # Setup database and environment
 make setup
-# Then edit backend/.env and add your OPENAI_API_KEY
+# Then edit backend/.env and add your GEMINI_API_KEY (get it from https://makersuite.google.com/app/apikey)
 
 # Start development servers
 make dev
@@ -73,17 +73,56 @@ make health
 make docs
 ```
 
-## Phase 1 Status
+## Features
 
-✅ **Phase 1 Complete**: All setup and foundation tasks completed.
+### ✅ Core Features (Phase 1 & 2)
 
-- Backend project structure initialized
-- Frontend project structure initialized
-- Core infrastructure (FastAPI, database, models) ready
-- Data models defined with camelCase API convention
-- Makefile with common development tasks
-- REST Client test file for API testing
+- **Database Connection Management**: Add, edit, delete, and test database connections
+- **Metadata Browsing**: View database schemas, tables, and columns in a tree view
+- **SQL Query Execution**: Execute SELECT queries with syntax highlighting and results table
+- **Query History**: View and re-run previously executed queries
 
-## Next Steps
+### ✅ Enhanced Features (Phase 3)
 
-Proceed to Phase 2 for core feature implementation (US1 + US2).
+- **Natural Language to SQL**: Generate SQL queries from English or Chinese natural language using Google Gemini
+- **Export Results**: Export query results to CSV or JSON format
+- **Rate Limiting**: Protected LLM endpoint with configurable rate limits
+
+### 🚧 Phase 4 (In Progress)
+
+- Documentation and testing improvements
+- Developer tools configuration
+
+## Architecture
+
+### Backend
+
+- **Framework**: FastAPI (Python 3.12+)
+- **Database**: SQLite for local storage, PostgreSQL/MySQL for query execution
+- **ORM**: SQLModel (Pydantic + SQLAlchemy)
+- **Validation**: sqlglot for SQL parsing and validation
+- **AI**: Google Generative AI SDK (Gemini) for natural language to SQL conversion
+
+### Frontend
+
+- **Framework**: React 18 with TypeScript
+- **Admin Framework**: Refine 5
+- **UI Library**: Ant Design 5
+- **Code Editor**: Monaco Editor (VS Code engine)
+- **Styling**: Tailwind CSS 4
+- **Build Tool**: Vite
+
+## Project Status
+
+✅ **Phase 1 Complete**: Setup and foundation  
+✅ **Phase 2 Complete**: Core features (US1 + US2)  
+✅ **Phase 3 Complete**: Enhanced features (US3 + US4)  
+🚧 **Phase 4 In Progress**: Documentation and polish
+
+See [PHASE3_IMPLEMENTATION.md](./PHASE3_IMPLEMENTATION.md) for detailed implementation status.
+
+## Documentation
+
+- **[Backend README](./backend/README.md)**: Backend setup, API usage, and development guide
+- **[Frontend README](./frontend/README.md)**: Frontend setup, features, and development guide
+- **[Architecture Documentation](./docs/)**: Detailed architecture and design documents

@@ -156,7 +156,7 @@ setup: install db-upgrade ## Initial setup: install dependencies and run migrati
 	@echo "$(GREEN)Setup complete!$(NC)"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. Copy backend/.env.example to backend/.env and add your OPENAI_API_KEY"
+	@echo "  1. Copy backend/.env.example to backend/.env and add your GEMINI_API_KEY"
 	@echo "  2. Run 'make dev' to start both servers"
 	@echo "  3. Open http://localhost:5173 in your browser"
 
