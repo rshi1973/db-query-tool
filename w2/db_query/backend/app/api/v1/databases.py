@@ -1,5 +1,6 @@
 """Database connection management API endpoints."""
 
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from typing import List
@@ -15,6 +16,8 @@ from app.models.schemas import (
 from app.services.database_service import database_service
 from app.services.metadata import fetch_metadata
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/dbs", tags=["databases"])
 
@@ -168,9 +171,16 @@ async def get_database_metadata(
         )
 
     # Fetch metadata
-    metadata_dict = await fetch_metadata(
-        session, name, connection.db_type, connection.url, force_refresh=refresh
-    )
+    try:
+        metadata_dict = await fetch_metadata(
+            session, name, connection.db_type, connection.url, force_refresh=refresh
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch metadata for {name}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load database metadata: {str(e)}",
+        )
 
     # Parse metadata
     tables = [
@@ -256,9 +266,16 @@ async def refresh_database_metadata(
         )
 
     # Force refresh metadata
-    metadata_dict = await fetch_metadata(
-        session, name, connection.db_type, connection.url, force_refresh=True
-    )
+    try:
+        metadata_dict = await fetch_metadata(
+            session, name, connection.db_type, connection.url, force_refresh=True
+        )
+    except Exception as e:
+        logger.error(f"Failed to refresh metadata for {name}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to refresh database metadata: {str(e)}",
+        )
 
     # Parse metadata
     tables = [
